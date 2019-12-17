@@ -31,7 +31,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include <openssl/ssl.h>
 #endif
 
-class TLSState {
+class LIVEMEDIA_API TLSState {
 public:
   TLSState(class RTSPClient& client);
   virtual ~TLSState();
