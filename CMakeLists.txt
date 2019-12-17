@@ -17,6 +17,11 @@ if ( NOT DEFINED BUILD_SHARED_LIBS )
    set ( BUILD_SHARED_LIBS TRUE )
 endif ()
 
+option(WITH_SSL "Compiling with SSL support" OFF)
+if(WITH_SSL)
+   find_package(OpenSSL REQUIRED)
+endif()
+
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
 set ( ${PROJECT_NAME}_HOME ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -50,6 +55,13 @@ else ()
       -DLIVEMEDIA_STATIC
    )
 endif ()
+
+if(NOT WITH_SSL)
+   list ( APPEND ${PROJECT_NAME}_DEFINITIONS
+      -DNO_OPENSSL=1
+   )
+endif()
+
 add_definitions ( ${${PROJECT_NAME}_DEFINITIONS} )
 
 
@@ -508,6 +520,16 @@ list ( APPEND ${PROJECT_NAME}_SOURCES
 add_library ( ${PROJECT_NAME} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS} )
 
 set ( ${PROJECT_NAME}_LINK_LIBRARIES "" )
+
+if(WITH_SSL)
+   if(NOT CMAKE_VERSION VERSION_LESS 3.4)
+     list(APPEND ${PROJECT_NAME}_LINK_LIBRARIES OpenSSL::SSL OpenSSL::Crypto)
+   else()
+     list(APPEND ${PROJECT_NAME}_LINK_LIBRARIES ${OPENSSL_LIBRARIES})
+     include_directories(${OPENSSL_INCLUDE_DIR})
+   endif()
+endif()
+
 if ( WIN32 )
    list ( APPEND ${PROJECT_NAME}_LINK_LIBRARIES
       ws2_32
