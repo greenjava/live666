@@ -388,7 +388,8 @@ RTSPClient::RTSPClient(UsageEnvironment& env, char const* rtspURL,
     fTunnelOverHTTPPortNum(tunnelOverHTTPPortNum),
     fUserAgentHeaderStr(NULL), fUserAgentHeaderStrLen(0),
     fInputSocketNum(-1), fOutputSocketNum(-1), fBaseURL(NULL), fTCPStreamIdCount(0),
-    fLastSessionId(NULL), fSessionTimeoutParameter(0), fSessionCookieCounter(0), fHTTPTunnelingConnectionIsPending(False),
+    fLastSessionId(NULL), fSessionTimeoutParameter(0), fSessionCookieCounter(0),
+    fHTTPTunnelingConnectionIsPending(False), fSendDummyUDPPacketsOverRTCP(True),
     fTLS(*this) {
   setBaseURL(rtspURL);
 
@@ -2027,7 +2028,7 @@ int RTSPClient::write(const char* data, unsigned count) {
       if (fTLS.isNeeded) {
 	return fTLS.write(data, count);
       } else {
-	return send(fOutputSocketNum, (const u_int8_t*)data, count, 0);
+	return send(fOutputSocketNum, data, count, 0);
       }
 }
 

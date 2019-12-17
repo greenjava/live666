@@ -392,6 +392,8 @@ private:
   unsigned fSessionCookieCounter;
   Boolean fHTTPTunnelingConnectionIsPending;
 
+  Boolean fSendDummyUDPPacketsOverRTCP; // default is 'true'
+
   // Optional support for TLS:
   TLSState fTLS;
   friend class TLSState;
