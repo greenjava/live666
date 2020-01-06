@@ -25,10 +25,6 @@ endif()
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
 set ( ${PROJECT_NAME}_HOME ${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories ( ${${PROJECT_NAME}_HOME}/UsageEnvironment/include )
-include_directories ( ${${PROJECT_NAME}_HOME}/BasicUsageEnvironment/include )
-include_directories ( ${${PROJECT_NAME}_HOME}/groupsock/include )
-include_directories ( ${${PROJECT_NAME}_HOME}/liveMedia/include )
 
 if ( WIN32 )
    list ( APPEND ${PROJECT_NAME}_DEFINITIONS
@@ -517,7 +513,17 @@ list ( APPEND ${PROJECT_NAME}_SOURCES
    ${${PROJECT_NAME}_SOURCES_LIVEMEDIA}
 )
 
-add_library ( ${PROJECT_NAME} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS} )
+add_library ( ${PROJECT_NAME} ${${PROJECT_NAME}_SOURCES})
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${${PROJECT_NAME}_HOME}/UsageEnvironment/include>
+    $<BUILD_INTERFACE:${${PROJECT_NAME}_HOME}/BasicUsageEnvironment/include>
+    $<BUILD_INTERFACE:${${PROJECT_NAME}_HOME}/groupsock/include>
+    $<BUILD_INTERFACE:${${PROJECT_NAME}_HOME}/liveMedia/include>
+    $<INSTALL_INTERFACE:include/live555/UsageEnvironment>
+    $<INSTALL_INTERFACE:include/live555/BasicUsageEnvironment>
+    $<INSTALL_INTERFACE:include/live555/groupsock>
+    $<INSTALL_INTERFACE:include/live555/liveMedia>
+)
 
 set ( ${PROJECT_NAME}_LINK_LIBRARIES "" )
 
@@ -535,7 +541,7 @@ if ( WIN32 )
       ws2_32
    )
 endif ()
-target_link_libraries ( ${PROJECT_NAME} PRIVATE ${${PROJECT_NAME}_LINK_LIBRARIES} )
+target_link_libraries ( ${PROJECT_NAME} PUBLIC ${${PROJECT_NAME}_LINK_LIBRARIES} )
 
 if ( WIN32 )
    set_target_properties ( ${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "d" )
@@ -577,6 +583,29 @@ set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_COMMON_COMPILER_FLAGS}" )
 set ( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_COMMON_COMPILER_FLAGS_RELEASE}" )
 set ( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_COMMON_COMPILER_FLAGS_DEBUG}" )
 
+
+# Name of cmake config files
+set(LIVE_VERSION_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
+set(LIVE_PROJECT_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake")
+# Where to install cmake "Targets" files
+set(LIVE_CONFIG_INSTALL_DIR "lib/cmake")
+
+# Generate basic config version files
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file("${LIVE_VERSION_CONFIG}" 
+    VERSION ${${PROJECT_NAME}_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+configure_package_config_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/Config.cmake.in" 
+    "${LIVE_PROJECT_CONFIG}"
+    INSTALL_DESTINATION ${LIVE_CONFIG_INSTALL_DIR}
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+        DESTINATION ${LIVE_CONFIG_INSTALL_DIR}
+)
+        
 install ( FILES
 	${${PROJECT_NAME}_HEADERS_USAGEENVIRONMENT}
 	DESTINATION
@@ -603,7 +632,13 @@ install ( FILES
 
 install ( TARGETS
 	${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}Targets
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
+)
+
+# Install cmake targets files
+install(EXPORT ${PROJECT_NAME}Targets
+    DESTINATION ${LIVE_CONFIG_INSTALL_DIR}
 )
